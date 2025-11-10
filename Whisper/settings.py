@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django_password_validators.password_history',
     'djoser',
     
-    'a_core'
+    'a_users'
 ]
 
 MIDDLEWARE = [
@@ -82,7 +82,7 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = 'a_core.User'
+AUTH_USER_MODEL = 'a_users.User'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -168,6 +168,7 @@ DJOSER = {
     'SEND_ACTIVATION_EMAIL': False,
     'PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND': True,
     'PASSWORD_RESET_CONFIRM_URL': env('PASSWORD_RESET_CONFIRM_URL'),
+    'USERNAME_RESET_CONFIRM_URL': '#/email/reset/confirm/{uid}/{token}',
     
     'PERMISSIONS' : {
         'user_create': ['rest_framework.permissions.AllowAny'],
@@ -176,7 +177,7 @@ DJOSER = {
         'user_list': ['rest_framework.permissions.IsAdminUser'],},
     
     'SERIALIZERS': {
-        'user_create' : 'a_core.serializers.CustomUserCreateSerializer'},
+        'user_create' : 'a_users.serializers.CustomUserCreateSerializer'},
 }
 
 EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
