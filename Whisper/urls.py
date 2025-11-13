@@ -7,4 +7,7 @@ urlpatterns = [
     # auth
     path('api/', include('a_users.urls')),
     path('api/', include("djoser.urls")),
+    
+    #GroupChat
+    path('api/chats/', include('a_rtchat.urls')),
 ]

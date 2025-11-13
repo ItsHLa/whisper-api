@@ -6,7 +6,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 from rest_framework.status import *
 
-from .utils.OTP import *
+from .utils.otps import *
 from .serializers import *
 
 

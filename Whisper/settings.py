@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django_password_validators.password_history',
     'djoser',
     
-    'a_users'
+    'a_users',
+    'a_rtchat'
 ]
 
 MIDDLEWARE = [
