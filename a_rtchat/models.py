@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
+from django.db.models import QuerySet
 import uuid
 User = get_user_model()
 
@@ -31,35 +32,48 @@ class GroupChat(models.Model):
         null=True,
         blank=True,
         related_name='group_admins',
-        on_delete=models.CASCADE)
+        on_delete=models.SET_NULL)
     
     
+    def delete_admin_group(self):
+        if self.admins:
+            self.admins.delete()
+       
     def create_admins_group(self):
         admins, created = Group.objects.get_or_create(name=f"admins_chat_{self.uid}")
         self.admins = admins
         self.save(update_fields=['admins'])
+     
+    def are_members(self, users):
+        return self.members.filter(id__in = users).exists()
         
-    def add_admin(self, user):
+    def add_admins(self, users):
         if not self.admins :
             self.create_admins_group()
         
-        if not self.is_admin(user):
-            self.admins.user_set.add(user)
+        if  self.check_if_admin(users):
+            return 
+        if isinstance(users,(list, tuple, QuerySet)):
+            self.admins.user_set.add(*users)
+        else:
+            self.admins.user_set.add(users)
     
-    def remove_admin(self, user):
+    def remove_admins(self, users):
         if not self.admins :
             self.create_admins_group()
             
-        if self.is_admin(user):
-            self.admins.user_set.remove(user)
+        if self.check_if_admin(users):
+            self.admins.user_set.remove(*users)
+            
+    def check_if_admin(self, users):
+        return self.admins and self.admins.user_set.filter(id__in=users).exists()
     
-    def is_admin(self, user):
-        return self.admins and self.admins.user_set.filter(pk=user.id).exists()
+    def is_owner(self, user):
+        return self.owner.id == user.id
     
-    @classmethod
-    def is_user_admin_in(cls, user, group):
-        return group.is_admin(user)
-      
+    def is_member(self, users):
+        return self.members.filter(id__in=users).exists()
+    
     @property
     def members_count(self):
         return self.members.count()
@@ -75,7 +89,10 @@ class GroupChat(models.Model):
         return User.objects.none()
     
     def __str__(self) -> str:
-        return f"{self.name} - {self.uid}"
+        str = None
+        if self.is_private:
+            return f"Private {self.id} - {self.uid}"
+        return f"Public {self.id} - {self.uid}"
     
 class GroupChatMessage(models.Model):
     group = models.ForeignKey(GroupChat, related_name='group_messages', on_delete=models.CASCADE)
