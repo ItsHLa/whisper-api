@@ -1,3 +1,5 @@
 from django.contrib import admin
 
-# Register your models here.
+from a_messages.models.chat_messages import ChatMessage
+
+admin.site.register(ChatMessage)

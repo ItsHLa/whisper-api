@@ -79,6 +79,7 @@ class Chat(models.Model):
         return self.online.count()
     
     class Meta:
+        ordering = ['-created_at']
         indexes = [
             models.Index(fields=['name'], name='chat_name_idx'),
         ]

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from a_chats.models.chat_messages import *
+from a_messages.models.chat_messages import *
 from djoser.serializers import UserSerializer
 from django.contrib.auth import get_user_model
 

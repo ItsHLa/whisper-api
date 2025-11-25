@@ -9,7 +9,6 @@ from a_chats.serializers.chat_folder import *
 from a_chats.serializers.chat import *
 from a_chats.serializers.membership import *
 from django.shortcuts import get_object_or_404
-from .models.chat_messages import *
 
 class FolderViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated, NoRetrieveFolderPermission]

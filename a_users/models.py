@@ -11,3 +11,6 @@ class User(AbstractUser):
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS =('first_name', 'last_name', 'username', 'phone_number', )
+    
+    def __str__(self) -> str:
+        return f"{self.id} - {self.email}"

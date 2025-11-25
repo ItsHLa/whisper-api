@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'djoser',
     
     'a_users',
-    'a_chats'
+    'a_chats',
+    'a_messages'
 ]
 
 MIDDLEWARE = [
@@ -189,3 +190,9 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_PORT = env.int('EMAIL_PORT')
 EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS')
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}

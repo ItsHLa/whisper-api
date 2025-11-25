@@ -1,7 +1,6 @@
 from rest_framework import permissions
 
 from a_chats.models.chat import Chat
-from .models.chat_messages import *
 from django.shortcuts import get_object_or_404
 
 class IsGroupAdmin(permissions.BasePermission):
