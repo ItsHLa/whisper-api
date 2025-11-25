@@ -1,29 +1,16 @@
 from rest_framework import serializers
-from a_rtchat.models.chat_messages_models import *
+from a_chats.models.chat_messages import *
 from djoser.serializers import UserSerializer
 from django.contrib.auth import get_user_model
 
-from a_rtchat.models.chat_model import Chat
-from a_rtchat.serializers.chat_folder_serializer import ChatFolderSerializer
+from a_chats.models.chat import Chat
+from a_chats.serializers.chat_folder import FolderSerializer
+from a_chats.serializers.membership import PublicMemberSerializer
 
 User = get_user_model()
-  
-class PublicChatSerializer(serializers.ModelSerializer): 
-    members = UserSerializer(many=True, read_only=True)
-    folder = ChatFolderSerializer(read_only = True, many=True)
-    
-    class Meta:
-        model = Chat
-        fields = ('id', 'name', 'folder', 'description', 'is_private', 'created_at', 'members_count', 'members', 'online_count' )
 
-class PrivateChatSerializer(serializers.ModelSerializer):
-    other_user = serializers.SerializerMethodField() 
-    name = serializers.SerializerMethodField()   
+class ChatDetailRepresentationMixin:
     
-    class Meta:
-        model = Chat
-        fields = ('id', 'name',  'is_private', 'other_user', 'created_at', ) 
-        
     def get_other_user(self, obj):
         if obj.is_private:
             me = self.context['request'].user
@@ -36,16 +23,37 @@ class PrivateChatSerializer(serializers.ModelSerializer):
             user = self.context['request'].user
             other = obj.members.exclude(id=user.id).first()
             return f'{other.first_name} {other.last_name}'  
-        return None      
+        return obj.name
+    
+
 
 class ChatRepresentationMixin:
+        
     def to_representation(self, instance):
         if instance.is_private:
             return PrivateChatSerializer(instance, context=self.context).data
         return PublicChatSerializer(instance, context=self.context).data
 
+class PublicChatSerializer(serializers.ModelSerializer): 
+    members = PublicMemberSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Chat
+        fields = ('id', 'name', 'description', 'is_private', 'created_at', 'members_count', 'members', 'online_count' )
+
+class PrivateChatSerializer(ChatDetailRepresentationMixin, serializers.ModelSerializer):
+    other_user = serializers.SerializerMethodField() 
+    name = serializers.SerializerMethodField()   
+    
+    class Meta:
+        model = Chat
+        fields = ('id', 'name',  'is_private', 'other_user', 'created_at', ) 
+     
+
+
+
 # CREATE _ GET
-class ChatSerializer(ChatRepresentationMixin, serializers.ModelSerializer,): 
+class ChatSerializer(ChatRepresentationMixin, serializers.ModelSerializer,):     
     other_user = serializers.PrimaryKeyRelatedField(
         required = False,
         write_only=True,
@@ -71,26 +79,17 @@ class ChatSerializer(ChatRepresentationMixin, serializers.ModelSerializer,):
         model = Chat
         fields = ('id', 'name', 'description', 'is_private',  'other_user')
         
-    def create_public_group(self, validated_data):
-        user = self.context['request'].user
-        group = Chat.objects.create(**validated_data)
-        group.add_owner(user)
-        return group
-    
-    def create_private_group(self, validated_data):
-        user = user = self.context['request'].user
-        other_user = validated_data.pop('other_user', None)
-        group, created = Chat.objects.get_or_create(**validated_data)
-        if created:
-            group.add_members([user, other_user])
-        return group
     
     def create(self, validated_data):
+        user = self.context['request'].user
         is_private = validated_data.get('is_private', False)
         if is_private:
-            return self.create_private_group(validated_data)
+            other_user = validated_data.pop('other_user', None)
+            validated_data['members'] = [user, other_user]
+            return Chat.objects.create_private_group(validated_data)
         else:
-            return self.create_public_group(validated_data)
+            validated_data['user'] = user
+            return Chat.objects.create_public_group(validated_data)
                 
 # UPDATE
 class UpdatePublicChatSerializer(ChatRepresentationMixin, serializers.ModelSerializer,):
@@ -102,13 +101,20 @@ class UpdatePublicChatSerializer(ChatRepresentationMixin, serializers.ModelSeria
     
 #LIST
 class ListChatSerializer(serializers.ModelSerializer):
-    last_message = serializers.SerializerMethodField()
+    # last_message = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
+    folders_ids = serializers.SerializerMethodField()
     
     class Meta:
         model = Chat
-        fields =('id','name',  'is_private', 'last_message' )
+        fields =('id','name',  'is_private',  'folders_ids', 'folders' )
     
+    def get_folders(self, obj):
+        return FolderSerializer(obj.folders, many=True)
+    
+    def get_folders_ids(self, obj):
+        
+        return list(obj.folders.values_list('id', flat=True))
     def get_name(self, obj):
         if obj.is_private:
             me = self.context['request'].user
@@ -116,6 +122,6 @@ class ListChatSerializer(serializers.ModelSerializer):
             return f"{other.first_name} {other.last_name}" 
         return obj.name
            
-    def get_last_message(self, obj):
-        msg= obj.group_messages.all().first()
-        return str(msg.body) if msg else None
+    # def get_last_message(self, obj):
+    #     msg= obj.group_messages.all().first()
+    #     return str(msg.body) if msg else None

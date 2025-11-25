@@ -1,5 +1,7 @@
 from rest_framework import permissions
-from .models.chat_messages_models import *
+
+from a_chats.models.chat import Chat
+from .models.chat_messages import *
 from django.shortcuts import get_object_or_404
 
 class IsGroupAdmin(permissions.BasePermission):
@@ -17,3 +19,11 @@ class IsGroupMember(permissions.BasePermission):
         pk = view.kwargs.get("pk")
         group = get_object_or_404(Chat, id=pk)
         return group.are_members([request.user])
+
+class NoRetrieveFolderPermission(permissions.BasePermission):
+    message = "Method \"GET\" not allowed."
+
+    def has_permission(self, request, view):
+        if view.action == 'retrieve' :
+            return False
+        return True

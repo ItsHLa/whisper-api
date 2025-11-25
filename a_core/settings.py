@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'djoser',
     
     'a_users',
-    'a_rtchat'
+    'a_chats'
 ]
 
 MIDDLEWARE = [

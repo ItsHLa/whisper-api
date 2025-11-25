@@ -1,9 +1,50 @@
 from rest_framework import serializers
 
-from a_rtchat.models.chat_messages_models import *
+from a_chats.models.chat import Chat
+from a_chats.models.chat_messages import *
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
+
+class PublicMemberSerializer(serializers.Serializer):
+    name = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
+    last_seen = serializers.SerializerMethodField()
+    
+    def get_name(self, obj):
+        return f'{obj.first_name} {obj.last_name}'
+    
+    def get_role(self, obj):
+        print(obj)
+        role = 'member'
+        if obj.user_membership.filter(is_admin=True).exists():
+            role = 'admin'
+        if obj.user_membership.filter(is_owner=True).exists():
+            role = 'owner'
+        return role
+    
+    def get_last_seen(self, obj):
+        return None
+    
+class PrivateMemberSerializer(serializers.Serializer):
+    name = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
+    last_seen = serializers.SerializerMethodField()
+    
+    def get_name(self, obj):
+        return f'{obj.first_name} {obj.last_name}'
+    
+    def get_role(self, obj):
+        print(obj)
+        role = 'member'
+        if obj.user_membership.filter(is_admin=True).exists():
+            role = 'admin'
+        if obj.user_membership.filter(is_owner=True).exists():
+            role = 'owner'
+        return role
+    
+    def get_last_seen(self, obj):
+        return None
   
 
 class BaseGroupManagementSerializer(serializers.ModelSerializer):
@@ -49,7 +90,8 @@ class AdminSerializer(BaseGroupManagementSerializer):
             raise serializers.ValidationError({'admins' : ['Admins with this accounts dose not exists']})
         group.remove_admin(users)
 
-class MembersSerializer(BaseGroupManagementSerializer):
+class MembershipSerializer(BaseGroupManagementSerializer):
+    
     
     def add_users(self):
         group = self.validated_data['group']
