@@ -67,7 +67,10 @@ class Chat(models.Model):
             user=user,
             **role)    
     
-    
+    def is_online(self, user):
+        print(self.online.filter(id=user.id).exists())
+        return self.online.filter(id=user.id).exists()   
+     
     objects = ChatManager()
     
     @property
